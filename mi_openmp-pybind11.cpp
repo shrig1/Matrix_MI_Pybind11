@@ -174,7 +174,31 @@ Eigen::SparseMatrix<double> loadMatrixMarketFile(const std::string &filename)
     return matrix;
 }
 
-Eigen::MatrixXd run(Eigen::SparseMatrix<double> sparseMatrix, size_t nbins)
+void saveMatrixMarketFile(const std::string &filename, const Eigen::SparseMatrix<double> &matrix)
+{
+    FILE *file = fopen(filename.c_str(), "w");
+    if (!file)
+    {
+        throw std::runtime_error("Failed to open file for writing: " + filename);
+    }
+
+    // Write Matrix Market banner
+    fprintf(file, "%%MatrixMarket matrix coordinate real general\n%\n");
+    fprintf(file, "%d %d %d\n", matrix.rows(), matrix.cols(), static_cast<int>(matrix.nonZeros()));
+
+    // Write non-zero entries
+    for (int k = 0; k < matrix.outerSize(); ++k)
+    {
+        for (Eigen::SparseMatrix<double>::InnerIterator it(matrix, k); it; ++it)
+        {
+            fprintf(file, "%d %d %lf\n", it.row() + 1, it.col() + 1, it.value()); // Adjust for 1-based indexing
+        }
+    }
+
+    fclose(file); // Close the file after writing
+}
+
+Eigen::MatrixXd run(Eigen::SparseMatrix<double> sparseMatrix, size_t nbins, bool checkpoint)
 {
     Eigen::SparseMatrix<double> pythonMI;
 
@@ -196,6 +220,9 @@ Eigen::MatrixXd run(Eigen::SparseMatrix<double> sparseMatrix, size_t nbins)
 #pragma omp parallel for schedule(dynamic, 10)
     for (int i = 0; i < sparseMatrix.rows(); ++i)
     {
+        if (checkpoint && i % 100 == 0) {
+            std::cout << "Processing row " << i << " out of " << sparseMatrix.rows() << std::endl;
+        }
         Eigen::VectorXd row_i = sparseMatrix.row(i).toDense();
 
         for (int j = i; j < sparseMatrix.rows(); ++j)
@@ -234,5 +261,9 @@ PYBIND11_MODULE(py_mi_openmp, m)
 {
     m.doc() = "mi_openmp plugin to run the MI calculation code with lower computational costs"; // optional module docstring
 
-    m.def("run", &run, py::arg("sparseMatrix"), py::arg("nbins"), py::return_value_policy::reference_internal);
+    m.def("computeError", &computeError, py::arg("cppMatrix"), py::arg("pythonMatrix"));
+    m.def("loadMatrixMarketFile", &loadMatrixMarketFile, py::arg("filename"));
+
+    m.def("run", &run, py::arg("sparseMatrix"), py::arg("nbins"), py::arg("checkpoint"), py::return_value_policy::reference_internal);
+    m.def("saveMatrixMarketFile", &saveMatrixMarketFile, py::arg("filename"), py::arg("matrix"));
 }

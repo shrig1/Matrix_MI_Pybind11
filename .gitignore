@@ -1,0 +1,4 @@
+*.mtx
+*.exe
+mi_openmp
+mi_serial
