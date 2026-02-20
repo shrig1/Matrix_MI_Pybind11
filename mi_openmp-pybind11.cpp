@@ -15,6 +15,15 @@
 #include <pybind11/eigen.h>
 namespace py = pybind11;
 
+
+/*
+================================================================
+
+INTERNAL NON-PYBIND METHODS BEGIN
+
+================================================================
+*/
+
 // Helper function for equal-width binning
 std::vector<double> create_bin_edges(const std::vector<double> &vec, size_t nbins)
 {
@@ -99,6 +108,25 @@ inline double compute_pairwise_mi(const std::vector<double> &vec1, const std::ve
     }
     return mi;
 }
+
+
+/*
+================================================================
+
+INTERNAL NON-PYBIND METHODS END
+
+================================================================
+*/
+
+
+
+/*
+================================================================
+
+PYBIND METHODS BEGIN
+
+================================================================
+*/
 
 // Compute error between Python lower triangular and C++ upper triangular matrices
 double computeError(const Eigen::MatrixXd &cppMatrix, const Eigen::MatrixXd &pythonMatrix)
@@ -198,7 +226,7 @@ void saveMatrixMarketFile(const std::string &filename, const Eigen::SparseMatrix
     fclose(file); // Close the file after writing
 }
 
-Eigen::MatrixXd run(Eigen::SparseMatrix<double> sparseMatrix, size_t nbins, bool checkpoint)
+Eigen::MatrixXd runMI(Eigen::SparseMatrix<double> sparseMatrix, size_t nbins, bool checkpoint)
 {
     Eigen::SparseMatrix<double> pythonMI;
 
@@ -260,10 +288,8 @@ int main(int argc, char *argv[])
 PYBIND11_MODULE(py_mi_openmp, m)
 {
     m.doc() = "mi_openmp plugin to run the MI calculation code with lower computational costs"; // optional module docstring
-
-    m.def("computeError", &computeError, py::arg("cppMatrix"), py::arg("pythonMatrix"));
     m.def("loadMatrixMarketFile", &loadMatrixMarketFile, py::arg("filename"));
 
-    m.def("run", &run, py::arg("sparseMatrix"), py::arg("nbins"), py::arg("checkpoint"), py::return_value_policy::reference_internal);
+    m.def("runMI", &runMI, py::arg("sparseMatrix"), py::arg("nbins"), py::arg("checkpoint"));
     m.def("saveMatrixMarketFile", &saveMatrixMarketFile, py::arg("filename"), py::arg("matrix"));
 }
