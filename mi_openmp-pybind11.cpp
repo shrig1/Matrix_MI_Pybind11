@@ -285,7 +285,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-PYBIND11_MODULE(py_mi_openmp, m)
+PYBIND11_MODULE(py_mi, m)
 {
     m.doc() = "mi_openmp plugin to run the MI calculation code with lower computational costs"; // optional module docstring
     m.def("loadMatrixMarketFile", &loadMatrixMarketFile, py::arg("filename"));
