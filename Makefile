@@ -59,13 +59,6 @@ all: $(TARGETS)
 	@echo "Eigen Path: $(EIGEN_PATH)"
 	@echo "CXXFLAGS: $(CXXFLAGS)"
 
-
-mi_serial: mi_serial.cpp mmio.c mmio.h
-	$(CXX) $(CXXFLAGS) -o $@ mi_serial.cpp mmio.c
-
-mi_openmp: mi_openmp.cpp mmio.c mmio.h
-	$(CXX) $(CXXFLAGS) $(OPENMPFLAGS) -o $@ mi_openmp.cpp mmio.c
-
 # Build python extension from the mi_openmp sources (expects pybind11 bindings
 # to be present inside mi_openmp.cpp or an included wrapper). Produces module
 # named py_mi_openmp<EXT_SUFFIX>. Use: make py
@@ -75,7 +68,6 @@ py_mi$(EXT_SUFFIX): mi_openmp-pybind11.cpp mmio.c mmio.h
 	$(CXX) $(CXXFLAGS) -fPIC -shared $(OPENMPFLAGS) $(PYBIND_LOCAL_INC) $(PYTHON_INCLUDES) -o $@ mi_openmp-pybind11.cpp mmio.c $(PYTHON_LDFLAGS)
 
 clean:
-	rm -f $(TARGETS)
 	rm -f py_mi*.so py_mi*$(EXT_SUFFIX)
 
 .PHONY: all clean  # Add .PHONY to prevent issues with files named 'all' or 'clean'
